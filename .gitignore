@@ -2,12 +2,9 @@ __pycache__/
 *.pyc
 .ipynb_checkpoints/
 # heavy intermediate files
-results/cache/
 *.pt
 # generated qualitative material (publish via Releases / Zenodo instead)
 results/exp5/gifs/
 results/exp5/gifs.zip
 # everything under results/ is ignored except the final paper artefacts
-results/*
-!results/paper/
-!results/.gitkeep
+

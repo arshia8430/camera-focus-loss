@@ -1,0 +1,12 @@
+# Python >= 3.10, a CUDA 12 GPU is required.
+# torch and pytorch3d must be installed first (see scripts/install_colab.sh for a working recipe).
+torch
+pytorch3d
+fvcore
+iopath
+numpy
+scipy
+pandas
+matplotlib
+pillow
+transformers

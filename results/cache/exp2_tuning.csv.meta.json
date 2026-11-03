@@ -1,0 +1,1 @@
+{"LR_GRID": [0.005, 0.008, 0.01, 0.03, 0.05, 0.08, 0.1, 0.3, 1.0], "T_SCALE": 3.0, "T_STEPS": 500, "W": 0.1, "ROT_T": 2.0, "LOGF_T": 0.02, "TRANS_FRAC": 0.01, "loss_version": "v2-signinv-sqrt"}

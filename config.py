@@ -66,9 +66,9 @@ TEST_SCENES = list(range(10, CFG["n_scenes"]))
 # --------------------------------------------------------------------------------------
 # Loss grids
 # --------------------------------------------------------------------------------------
-ZF_HARD = [0.1, 0.5, 1, 2, 5, 10]
-ZF_SOFT = [0.1, 0.5, 1, 2, 5, 10]
-SIGMAS = [0.25, 1, 2, 4, 8, 16, 32, 64]
+ZF_HARD = [ 0.5, 1, 2, 5, 10]
+ZF_SOFT = [0.5, 1, 2, 5, 10]
+SIGMAS = [1, 4, 8, 16,64]
 SG_RHO, SG_SIG, SG_ZF = [4, 12, 24, 48], [2, 4, 8], [1]      # SoftGrid: Gaussian width (px), sigma, zf
 
 # Bump this whenever ANY loss formula changes: it invalidates every cache that depends on the losses.
@@ -78,7 +78,7 @@ LOSS_VERSION = "v2-signinv-sqrt"
 # Optimisation / convergence criteria (experiment 2 and its derivatives)
 # --------------------------------------------------------------------------------------
 T_STEPS, T_SCALE = 500, 3.0
-LR_GRID = [0.005, 0.008, 0.01, 0.03, 0.05, 0.08, 0.1, 0.3, 1.0]
+LR_GRID = [0.005,0.01, 0.05, 0.1,0.5]
 ROT_T, LOGF_T, TRANS_FRAC = 2.0, 0.02, 0.01     # rotation [deg], |log focal|, translation (fraction of GT distance)
 
 # --------------------------------------------------------------------------------------

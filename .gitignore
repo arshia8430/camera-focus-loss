@@ -2,7 +2,6 @@ __pycache__/
 *.pyc
 .ipynb_checkpoints/
 # heavy intermediate files
-*.pt
 # generated qualitative material (publish via Releases / Zenodo instead)
 results/exp5/gifs/
 results/exp5/gifs.zip

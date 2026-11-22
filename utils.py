@@ -128,6 +128,7 @@ def rank_metrics(loss, sim, k=30):
     if np.std(loss) == 0:
         return (np.nan,) * 4
     N = len(sim)
+    k = min(k, N)
     rho = stats.spearmanr(loss, -sim)[0]
     tau = stats.kendalltau(loss, -sim)[0]
     rel = N - stats.rankdata(-sim)

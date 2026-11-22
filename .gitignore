@@ -8,3 +8,4 @@ results/exp5/gifs/
 results/exp5/gifs.zip
 # everything under results/ is ignored except the final paper artefacts
 exp5
+*.zip

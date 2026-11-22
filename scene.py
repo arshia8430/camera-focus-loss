@@ -1,4 +1,25 @@
+"""HSSD-hab (Hugging Face `hssd/hssd-hab`) full-house scenes + camera sampling + the PyTorch3D renderer.
 
+Same module interface as the BlendedMVS version: `make_scene`, `build_scene_data`, `render_batch`, `to_p3d`
+(names, arguments and return structure unchanged), so the rest of the project keeps working.
+
+What a scene is here
+    scenes/<id>.scene_instance.json  -> stage (the house shell) + ~50-300 object instances (pose + scale)
+    stages/<id>.glb, objects/**/*.glb -> render meshes with textures
+`make_scene(seed)` downloads (only what that scene references), assembles stage + ALL objects into one textured
+mesh (one packed texture atlas), recentres it at the origin and rescales it to bounding radius NORM_RAD.
+
+Download policy (nothing extra is ever fetched)
+    * only the NUM_SCENES scenes selected below are used (spread evenly over the sorted list of scenes),
+    * per scene: scene json, stage glb+config, and the glb+config of exactly the objects that scene references,
+    * everything lands in HSSD_ROOT and is reused on later runs (no network access for files already there).
+
+Cameras
+    CAM_MODE = "interior" (default): eye-height cameras inside the house, away from walls/furniture.
+    CAM_MODE = "orbit": the original sphere-around-the-scene sampler (sees the house from outside).
+
+Extra pip dependencies: huggingface_hub, trimesh, pillow (scipy/numpy/torch/pytorch3d as before).
+"""
 import functools
 import json
 import math
@@ -377,7 +398,10 @@ def _assemble(data):
     print(f"[hssd] assembled {len(inst)} instances ({skipped} skipped), {len(V):,} verts, {len(F):,} faces, "
           f"{len(tiles)} textures -> {TEX_SIZE}x{TEX_SIZE} atlas")
     maps = torch.from_numpy(atlas).to(dev).float().div_(255.)[None]
-    return Meshes([V], [F], textures=TexturesUV(maps=maps, faces_uvs=[F], verts_uvs=[UV]))
+    mesh = Meshes([V], [F], textures=TexturesUV(maps=maps, faces_uvs=[F], verts_uvs=[UV]))
+    del assets, Vs, Fs, UVs  # per-part tensors are no longer needed
+    torch.cuda.empty_cache()
+    return mesh
 
 
 def _wxyz_to_xyzw(q):  # Habitat json stores quaternions as [w, x, y, z]
@@ -462,9 +486,18 @@ def to_p3d(cam):
     return cams
 
 
+def _safe_bs(mesh, bs, textured=True, budget=3e9, overhead=4):
+    """Cap the batch size so `mesh.extend(bs)` fits in `budget` bytes (a whole-house mesh is ~100-300 MB per copy)."""
+    per = mesh.verts_packed().numel() * 4 + mesh.faces_packed().numel() * 8
+    if textured and mesh.textures is not None:
+        per += mesh.textures.maps_padded()[0].numel() * 4
+    return int(max(1, min(bs, budget // (overhead * per))))
+
+
 @torch.no_grad()
 def render_batch(mesh, cam, bs=CFG["render_bs"]):
     """Returns RGB images (B,3,H,W) in [0,1] and binary object masks (B,H,W)."""
+    bs = _safe_bs(mesh, bs)
     out = []
     for i in range(0, n_cams(cam), bs):
         c = idx_cams(cam, slice(i, i + bs))
@@ -560,6 +593,7 @@ def visible_frac(cam, pts):
 def _depth_ok(mesh, cam, unit, bs=CFG["render_bs"]):
     """Interior views only: reject cameras staring at a wall from close range / looking out of the house. Returns (B,)."""
     geom = Meshes([mesh.verts_packed()], [mesh.faces_packed()])  # geometry only: cheap to extend
+    bs = _safe_bs(geom, bs, textured=False)
     res = []
     for i in range(0, n_cams(cam), bs):
         c = idx_cams(cam, slice(i, i + bs))
